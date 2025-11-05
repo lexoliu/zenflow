@@ -1,0 +1,13 @@
+[package]
+name = "zenflow"
+version = "0.1.0"
+edition = "2021"
+
+[lib]
+crate-type = ["cdylib"]
+
+[dependencies]
+thought-plugin = { workspace = true }
+bincode = { workspace = true }
+serde = { workspace = true }
+askama.workspace = true
