@@ -6,9 +6,6 @@ name = "zenflow"
 version = "0.1.0"
 edition = "2021"
 
-[lib]
-crate-type = ["cdylib"]
-
 [dependencies]
 thought-plugin = { git = "https://github.com/lexoliu/thought.git" }
 askama = "0.12.1"
