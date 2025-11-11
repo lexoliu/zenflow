@@ -1,0 +1,5 @@
+name = "zenflow"
+author = "Lexo Liu"
+version = "0.1.0"
+kind = "theme"
+description = "Default theme for thought"
