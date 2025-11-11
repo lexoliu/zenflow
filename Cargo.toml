@@ -7,7 +7,5 @@ edition = "2021"
 crate-type = ["cdylib"]
 
 [dependencies]
-thought-plugin = { workspace = true }
-bincode = { workspace = true }
-serde = { workspace = true }
-askama.workspace = true
+thought-plugin = { git = "https://github.com/lexoliu/thought.git" }
+askama = "*"

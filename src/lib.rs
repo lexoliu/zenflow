@@ -1,5 +1,5 @@
-use askama::Template;
 use thought_plugin::{
+    askama::Template,
     export_theme,
     helpers::{article_output_file, format_rfc3339, markdown_to_html},
     Article, ArticlePreview, Theme,
