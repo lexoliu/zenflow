@@ -11,4 +11,4 @@ crate-type = ["cdylib"]
 
 [dependencies]
 thought-plugin = { git = "https://github.com/lexoliu/thought.git" }
-askama = "*"
+askama = "0.12.1"
