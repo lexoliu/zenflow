@@ -4,6 +4,7 @@ use thought_plugin::{
     helpers::{article_output_file, format_rfc3339, markdown_to_html},
     Article, ArticlePreview, Theme,
 };
+use time::format_description;
 
 pub struct Zenflow;
 
@@ -39,7 +40,7 @@ struct IndexTemplate<'a> {
 impl Theme for Zenflow {
     fn generate_page(article: Article) -> String {
         let html_output = markdown_to_html(article.content());
-        let created = format_rfc3339(article.metadata().created());
+        let created = format_display_date(article.metadata().created());
         let depth = article.preview().category().path().len();
         let asset_prefix = relative_prefix(depth);
         let search_js = search_script_at_depth(depth);
@@ -111,4 +112,11 @@ fn search_script_at_depth(depth: usize) -> String {
 
 fn search_script_path() -> &'static str {
     SEARCH_BUNDLE
+}
+
+fn format_display_date(dt: time::OffsetDateTime) -> String {
+    let Ok(fmt) = format_description::parse("[weekday repr:short] [month repr:short] [day]") else {
+        return format_rfc3339(dt);
+    };
+    dt.format(&fmt).unwrap_or_else(|_| format_rfc3339(dt))
 }

@@ -12,3 +12,4 @@ crate-type = ["cdylib", "rlib"]
 [dependencies]
 thought-plugin = { git = "https://github.com/lexoliu/thought.git" }
 askama = "0.12.1"
+time = { version = "0.3", features = ["macros"] }
