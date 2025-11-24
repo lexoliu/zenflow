@@ -1,53 +1,19 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <link rel="stylesheet" type="text/css" href="{{ asset_prefix }}/assets/style.css">
   <style>
-    .search-bar {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      margin-top: 8px;
-    }
-
-    .search-input {
-      flex: 1;
-      padding: 10px 12px;
-      border: 2px solid var(--foreground);
-      background: var(--background);
-      color: var(--foreground);
-      font-size: 16px;
-    }
-
-    .search-button {
-      padding: 10px 16px;
-      border: 2px solid var(--foreground);
-      background: var(--foreground);
-      color: var(--background);
-      font-weight: bold;
-      cursor: pointer;
-    }
-
-    .search-results .hit {
-      margin-top: 16px;
-      padding: 16px;
-      border: 2px solid var(--foreground);
-    }
-
-    .search-results .hit a {
-      font-weight: bold;
-    }
-
-    .muted {
-      opacity: 0.7;
-    }
+    .search-bar { display: flex; align-items: center; gap: 12px; margin-top: 8px; }
+    .search-input { flex: 1; padding: 10px 12px; border: 2px solid var(--foreground); background: var(--background); color: var(--foreground); font-size: 16px; }
+    .search-button { padding: 10px 16px; border: 2px solid var(--foreground); background: var(--foreground); color: var(--background); font-weight: bold; cursor: pointer; }
+    .search-results .hit { margin-top: 16px; padding: 16px; border: 2px solid var(--foreground); }
+    .search-results .hit a { font-weight: bold; }
+    .muted { opacity: 0.7; }
   </style>
   <title>Zenflow</title>
 </head>
-
 <body>
   <div class="padding-left-20">
     <h1>{{ site_title }}</h1>
@@ -57,29 +23,26 @@
     </div>
   </div>
   <div class="padding">
-    {% if entries | length == 0 %}
-    <div class="flex border padding">
-      <p class="muted">No articles yet. Start writing!</p>
-    </div>
-    {% else %}
+    {% if has_entries %}
     {% for entry in entries %}
     <div class="flex border padding">
       <h2>{{ entry.title }}</h2>
       <a class="text-right" href="{{ entry.href }}">Read more</a>
     </div>
     {% endfor %}
+    {% else %}
+    <div class="flex border padding">
+      <p class="muted">No articles yet. Start writing!</p>
+    </div>
     {% endif %}
-
     <div id="search-results" class="search-results"></div>
-    <footer> {{ footer | safe }}</footer>
+    <footer>{{ footer }}</footer>
   </div>
-
   <script src="{{ search_js }}" defer></script>
   <script>
     const input = document.getElementById('search-input');
     const button = document.getElementById('search-btn');
     const resultsEl = document.getElementById('search-results');
-
     function renderResults(hits) {
       if (!hits || hits.length === 0) {
         resultsEl.innerHTML = '<p class="muted">No results.</p>';
@@ -90,13 +53,9 @@
         return `<div class="hit"><a href="${hit.permalink}">${hit.title}</a>${desc}</div>`;
       }).join('');
     }
-
     async function runSearch() {
       const query = input.value.trim();
-      if (!query) {
-        resultsEl.innerHTML = '';
-        return;
-      }
+      if (!query) { resultsEl.innerHTML = ''; return; }
       try {
         const result = await window.ThoughtSearch.search(query);
         const hits = Array.isArray(result) ? result : (result && result.hits) ? result.hits : [];
@@ -105,14 +64,8 @@
         resultsEl.innerHTML = `<p class="muted">Search failed: ${err}</p>`;
       }
     }
-
-    input.addEventListener('keydown', (event) => {
-      if (event.key === 'Enter') {
-        runSearch();
-      }
-    });
+    input.addEventListener('keydown', (event) => { if (event.key === 'Enter') { runSearch(); } });
     button.addEventListener('click', runSearch);
   </script>
 </body>
-
 </html>

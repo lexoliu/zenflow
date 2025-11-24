@@ -33,6 +33,7 @@ struct IndexTemplate<'a> {
     asset_prefix: &'a str,
     site_title: &'a str,
     footer: &'a str,
+    has_entries: bool,
 }
 
 impl Theme for Zenflow {
@@ -74,6 +75,7 @@ impl Theme for Zenflow {
             search_js,
             site_title: SITE_TITLE,
             footer: FOOTER,
+            has_entries: !entries.is_empty(),
         }
         .render()
         .expect("failed to render index template")
