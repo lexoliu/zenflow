@@ -25,7 +25,7 @@
   <div class="padding">
     <h2># {{ title }}</h2>
     <p>By {{ author }} · {{ created }}</p>
-    <div class="flex border padding">{{ body }}</div>
+    <div class="flex border padding">{{ body|safe }}</div>
     <div id="search-results" class="search-results"></div>
     <footer>{{ footer }}</footer>
   </div>
