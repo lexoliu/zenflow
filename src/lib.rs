@@ -1,10 +1,7 @@
 use thought_plugin::{
     askama::Template,
     export_theme,
-    helpers::{
-        article_output_file, format_rfc3339, markdown_to_html, search_script_for_article,
-        search_script_path,
-    },
+    helpers::{article_output_file, format_rfc3339, markdown_to_html},
     Article, ArticlePreview, Theme,
 };
 
@@ -14,13 +11,13 @@ pub struct Zenflow;
 #[template(path = "article.html")]
 struct PageTemplate<'a> {
     title: &'a str,
-    site_title: &'a str,
-    footer: &'a str,
     created: &'a str,
     body: &'a str,
     author: &'a str,
     asset_prefix: &'a str,
     search_js: &'a str,
+    site_title: &'a str,
+    footer: &'a str,
 }
 
 struct IndexEntry {
@@ -32,10 +29,10 @@ struct IndexEntry {
 #[template(path = "index.html")]
 struct IndexTemplate<'a> {
     entries: &'a [IndexEntry],
+    search_js: &'a str,
+    asset_prefix: &'a str,
     site_title: &'a str,
     footer: &'a str,
-    asset_prefix: &'a str,
-    search_js: &'a str,
 }
 
 impl Theme for Zenflow {
@@ -44,17 +41,17 @@ impl Theme for Zenflow {
         let created = format_rfc3339(article.metadata().created());
         let depth = article.preview().category().path().len();
         let asset_prefix = relative_prefix(depth);
-        let search_js = search_script_for_article(article.preview());
+        let search_js = search_script_at_depth(depth);
 
         PageTemplate {
             title: article.title(),
-            site_title: article.preview().site_title(),
-            footer: article.preview().site_footer(),
             created: &created,
             author: article.preview().metadata().author(),
             body: html_output.as_str(),
             asset_prefix: &asset_prefix,
             search_js: &search_js,
+            site_title: SITE_TITLE,
+            footer: FOOTER,
         }
         .render()
         .expect("failed to render page template")
@@ -73,10 +70,10 @@ impl Theme for Zenflow {
 
         IndexTemplate {
             entries: &entries,
-            site_title: "Zenflow",
-            footer: "Thought",
             asset_prefix,
             search_js,
+            site_title: SITE_TITLE,
+            footer: FOOTER,
         }
         .render()
         .expect("failed to render index template")
@@ -91,4 +88,25 @@ fn relative_prefix(depth: usize) -> String {
     } else {
         "../".repeat(depth)
     }
+}
+
+const SITE_TITLE: &str = "Zenflow";
+const FOOTER: &str = "Thought";
+const SEARCH_BUNDLE: &str = "assets/thought-search/thought-search.js";
+
+fn search_script_at_depth(depth: usize) -> String {
+    let mut prefix = String::new();
+    if depth == 0 {
+        prefix.push('.');
+    } else {
+        prefix.push_str(&"../".repeat(depth));
+    }
+    if !prefix.ends_with('/') {
+        prefix.push('/');
+    }
+    format!("{prefix}{SEARCH_BUNDLE}")
+}
+
+fn search_script_path() -> &'static str {
+    SEARCH_BUNDLE
 }
