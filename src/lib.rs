@@ -1,10 +1,9 @@
+use askama::Template;
 use thought_plugin::{
-    askama::Template,
     export_theme,
-    helpers::{article_output_file, format_rfc3339, markdown_to_html},
+    helpers::{index_assets_prefix, index_search_script_path},
     Article, ArticlePreview, Theme,
 };
-use time::format_description;
 
 pub struct Zenflow;
 
@@ -19,11 +18,19 @@ struct PageTemplate<'a> {
     search_js: &'a str,
     site_title: &'a str,
     footer: &'a str,
+    translations: &'a [LangOption],
+    has_translations: bool,
 }
 
 struct IndexEntry {
     title: String,
     href: String,
+}
+
+struct LangOption {
+    locale: String,
+    href: String,
+    selected: bool,
 }
 
 #[derive(Template)]
@@ -39,21 +46,31 @@ struct IndexTemplate<'a> {
 
 impl Theme for Zenflow {
     fn generate_page(article: Article) -> String {
-        let html_output = markdown_to_html(article.content());
-        let created = format_display_date(article.metadata().created());
-        let depth = article.preview().category().path().len();
-        let asset_prefix = relative_prefix(depth);
-        let search_js = search_script_at_depth(depth);
+        let html_output = article.content_html();
+        let created = article.metadata().created_display_for(article.locale());
+        let asset_prefix = article.assets_prefix();
+        let search_js = article.search_script_path();
+        let translations = article
+            .translation_links()
+            .into_iter()
+            .map(|link| LangOption {
+                selected: link.locale == article.locale(),
+                locale: link.locale,
+                href: link.href,
+            })
+            .collect::<Vec<_>>();
 
         PageTemplate {
             title: article.title(),
             created: &created,
             author: article.preview().metadata().author(),
             body: html_output.as_str(),
-            asset_prefix: &asset_prefix,
-            search_js: &search_js,
+            asset_prefix: asset_prefix.as_str(),
+            search_js: search_js.as_str(),
             site_title: SITE_TITLE,
             footer: FOOTER,
+            translations: translations.as_slice(),
+            has_translations: translations.len() > 1,
         }
         .render()
         .expect("failed to render page template")
@@ -64,11 +81,11 @@ impl Theme for Zenflow {
         for article in articles {
             entries.push(IndexEntry {
                 title: article.title().to_owned(),
-                href: article_output_file(&article),
+                href: article.output_file(),
             });
         }
-        let search_js = search_script_path();
-        let asset_prefix = ".";
+        let search_js = index_search_script_path();
+        let asset_prefix = index_assets_prefix();
 
         IndexTemplate {
             entries: &entries,
@@ -85,38 +102,5 @@ impl Theme for Zenflow {
 
 export_theme!(Zenflow);
 
-fn relative_prefix(depth: usize) -> String {
-    if depth == 0 {
-        ".".to_string()
-    } else {
-        "../".repeat(depth)
-    }
-}
-
 const SITE_TITLE: &str = "Zenflow";
 const FOOTER: &str = "Thought";
-const SEARCH_BUNDLE: &str = "assets/thought-search/thought-search.js";
-
-fn search_script_at_depth(depth: usize) -> String {
-    let mut prefix = String::new();
-    if depth == 0 {
-        prefix.push('.');
-    } else {
-        prefix.push_str(&"../".repeat(depth));
-    }
-    if !prefix.ends_with('/') {
-        prefix.push('/');
-    }
-    format!("{prefix}{SEARCH_BUNDLE}")
-}
-
-fn search_script_path() -> &'static str {
-    SEARCH_BUNDLE
-}
-
-fn format_display_date(dt: time::OffsetDateTime) -> String {
-    let Ok(fmt) = format_description::parse("[weekday repr:short] [month repr:short] [day]") else {
-        return format_rfc3339(dt);
-    };
-    dt.format(&fmt).unwrap_or_else(|_| format_rfc3339(dt))
-}

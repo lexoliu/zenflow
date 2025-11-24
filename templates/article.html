@@ -3,29 +3,56 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <link rel="stylesheet" type="text/css" href="{{ asset_prefix }}/assets/style.css">
+  <link rel="stylesheet" type="text/css" href="{{ asset_prefix }}assets/style.css">
   <style>
-    .search-bar { display: flex; align-items: center; gap: 12px; margin-top: 8px; }
-    .search-input { flex: 1; padding: 10px 12px; border: 2px solid var(--foreground); background: var(--background); color: var(--foreground); font-size: 16px; }
-    .search-button { padding: 10px 16px; border: 2px solid var(--foreground); background: var(--foreground); color: var(--background); font-weight: bold; cursor: pointer; }
+    .page-header { display: flex; align-items: center; gap: 12px; justify-content: space-between; flex-wrap: wrap; }
+    .search-bar { position: relative; display: block; margin-top: 8px; }
+    .search-bar--compact { max-width: 320px; }
+    .search-input { width: 100%; padding: 14px 88px 14px 16px; border: 2px solid var(--foreground); background: var(--background); color: var(--foreground); font-size: 18px; box-sizing: border-box; transition: width 0.25s ease, opacity 0.2s ease; }
+    .search-bar--compact .search-input { width: 0; padding: 0 48px 0 0; opacity: 0; pointer-events: none; }
+    .search-bar--compact.expanded .search-input { width: 100%; padding: 14px 56px 14px 16px; opacity: 1; pointer-events: auto; }
+    .search-button { position: absolute; top: 50%; right: 10px; transform: translateY(-50%); padding: 10px 14px; border: 2px solid var(--foreground); background: var(--foreground); color: var(--background); font-weight: bold; cursor: pointer; width: 48px; height: 48px; display: inline-flex; align-items: center; justify-content: center; }
+    .search-button .label { display: none; }
+    .search-bar--compact .search-button { width: 44px; height: 44px; }
     .search-results .hit { margin-top: 16px; padding: 16px; border: 2px solid var(--foreground); }
     .search-results .hit a { font-weight: bold; }
     .muted { opacity: 0.7; }
+    .article-body { margin-top: 12px; }
+    .article-body > h1:first-child,
+    .article-body > h2:first-child { display: none; }
+    .lang-switch { display: flex; align-items: center; gap: 8px; margin-top: 8px; }
+    .lang-switch label { font-weight: bold; }
+    .lang-switch select { padding: 8px 12px; border: 2px solid var(--foreground); background: var(--background); color: var(--foreground); }
   </style>
   <title>{{ title }}</title>
 </head>
 <body>
   <div class="padding-left-20">
-    <h1><a href="{{ asset_prefix }}/index.html">{{ site_title }}</a></h1>
-    <div class="search-bar">
-      <input class="search-input" id="search-input" type="search" placeholder="Search articles..." />
-      <button class="search-button" id="search-btn">Search</button>
+    <div class="page-header">
+      <h1><a href="{{ asset_prefix }}index.html">{{ site_title }}</a></h1>
+      <div class="search-bar search-bar--compact" id="search-container">
+        <input class="search-input" id="search-input" type="search" placeholder="Search articles..." />
+        <button class="search-button" id="search-btn" aria-label="Search">
+          <span aria-hidden="true">🔍</span>
+          <span class="label">Search</span>
+        </button>
+      </div>
     </div>
   </div>
   <div class="padding">
     <h2># {{ title }}</h2>
     <p>By {{ author }} · {{ created }}</p>
-    <div class="flex border padding">{{ body|safe }}</div>
+    {% if has_translations %}
+    <div class="lang-switch">
+      <label for="lang-select">Language</label>
+      <select id="lang-select">
+        {% for lang in translations %}
+        <option value="{{ lang.href }}" {% if lang.selected %}selected{% endif %}>{{ lang.locale }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    {% endif %}
+    <div class="flex border padding article-body">{{ body|safe }}</div>
     <div id="search-results" class="search-results"></div>
     <footer>{{ footer }}</footer>
   </div>
@@ -33,7 +60,10 @@
   <script>
     const input = document.getElementById('search-input');
     const button = document.getElementById('search-btn');
+    const container = document.getElementById('search-container');
     const resultsEl = document.getElementById('search-results');
+    const isCompact = container?.classList.contains('search-bar--compact');
+    const langSelect = document.getElementById('lang-select');
     function renderResults(hits) {
       if (!hits || hits.length === 0) {
         resultsEl.innerHTML = '<p class="muted">No results.</p>';
@@ -55,8 +85,35 @@
         resultsEl.innerHTML = `<p class="muted">Search failed: ${err}</p>`;
       }
     }
-    input.addEventListener('keydown', (event) => { if (event.key === 'Enter') { runSearch(); } });
-    button.addEventListener('click', runSearch);
+    input.addEventListener('keydown', (event) => {
+      if (event.key === 'Enter') { runSearch(); }
+      if (event.key === 'Escape' && isCompact) {
+        input.value = '';
+        resultsEl.innerHTML = '';
+        container.classList.remove('expanded');
+      }
+    });
+    button.addEventListener('click', () => {
+      if (isCompact && !container.classList.contains('expanded')) {
+        container.classList.add('expanded');
+        input.focus();
+        return;
+      }
+      runSearch();
+    });
+    input.addEventListener('blur', () => {
+      if (isCompact && !input.value.trim()) {
+        container.classList.remove('expanded');
+      }
+    });
+    if (langSelect) {
+      langSelect.addEventListener('change', (event) => {
+        const href = event.target.value;
+        if (href) {
+          window.location.href = href;
+        }
+      });
+    }
   </script>
 </body>
 </html>
