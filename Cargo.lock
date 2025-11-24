@@ -470,7 +470,7 @@ dependencies = [
 [[package]]
 name = "thought-plugin"
 version = "0.1.0"
-source = "git+https://github.com/lexoliu/thought.git#1e0e1ac5dc3907f74ed6fb116b21fea8d4a1b735"
+source = "git+https://github.com/lexoliu/thought.git#f6c40120b1604028165c26c5ccf46430e5daad46"
 dependencies = [
  "askama",
  "pulldown-cmark",
