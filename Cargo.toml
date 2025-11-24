@@ -13,3 +13,6 @@ crate-type = ["cdylib", "rlib"]
 thought-plugin = { git = "https://github.com/lexoliu/thought.git" }
 askama = "0.12.1"
 time = { version = "0.3", features = ["macros"] }
+
+[patch."https://github.com/lexoliu/thought.git"]
+thought-plugin = { path = "../thought/plugin" }
