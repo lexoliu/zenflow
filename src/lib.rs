@@ -25,6 +25,8 @@ struct PageTemplate<'a> {
 struct IndexEntry {
     title: String,
     href: String,
+    locale: String,
+    default_locale: String,
 }
 
 struct LangOption {
@@ -42,6 +44,9 @@ struct IndexTemplate<'a> {
     site_title: &'a str,
     footer: &'a str,
     has_entries: bool,
+    locales: Vec<String>,
+    locales_json: String,
+    has_locale_switch: bool,
 }
 
 impl Theme for Zenflow {
@@ -78,12 +83,23 @@ impl Theme for Zenflow {
 
     fn generate_index(articles: Vec<ArticlePreview>) -> String {
         let mut entries = Vec::new();
+        let mut locales = std::collections::BTreeSet::new();
         for article in articles {
+            locales.insert(article.default_locale().to_owned());
+            locales.insert(article.locale().to_owned());
+            for translation in article.translations() {
+                locales.insert(translation.locale.to_owned());
+            }
             entries.push(IndexEntry {
                 title: article.title().to_owned(),
                 href: article.output_file(),
+                locale: article.locale().to_owned(),
+                default_locale: article.default_locale().to_owned(),
             });
         }
+        let locales: Vec<String> = locales.into_iter().collect();
+        let locales_json = serde_json::to_string(&locales).unwrap_or_else(|_| "[]".to_string());
+        let has_locale_switch = locales.len() > 1;
         let search_js = index_search_script_path();
         let asset_prefix = index_assets_prefix();
 
@@ -94,6 +110,9 @@ impl Theme for Zenflow {
             site_title: SITE_TITLE,
             footer: FOOTER,
             has_entries: !entries.is_empty(),
+            locales,
+            locales_json,
+            has_locale_switch,
         }
         .render()
         .expect("failed to render index template")
